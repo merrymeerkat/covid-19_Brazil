@@ -1,0 +1,176 @@
+---
+title: "Covid-19 por dia da semana"
+author: "Daniela Moura"
+date: "2 de junho de 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+Olhando para o gráfico de novos casos por dia que aparece no portal do ministério da saúde (https://covid.saude.gov.br/), tive a impressão de que os números de casos novos nos domingos tendia  a ser menor. Decidi investigar isso mais a fundo, e agrupar os números de novos casos e novos óbitos por dia da semana para conferir se haveria mesmo uma diferença.    
+
+Primeiro, vamos ler e ajeitar os dados:
+```{r}
+library(plotly)
+library(dplyr)
+
+covid <- read.csv("jun1.csv", stringsAsFactors = FALSE, header = TRUE, sep = ";")
+
+colnames(covid)[1] <- "data"
+
+covid$date <- as.Date(covid$data, "%d/%b")
+
+#corrigindo a grafia de uma célula
+covid[95, 6] <- "sabado"
+```
+
+
+Agora, agregamos valores de casos e óbitos pela média por dia da semana:
+```{r}
+weekdays_and_cases <- aggregate(casosNovos ~ diaDaSemana_curto, data = covid, FUN = mean)
+weekdays_and_cases <- as.data.frame(weekdays_and_cases)
+
+weekdays_and_deaths <- aggregate(obitosNovos ~ diaDaSemana_curto, data = covid, FUN = mean)
+weekdays_and_deaths <- as.data.frame(weekdays_and_deaths)
+```
+
+Em seguida, juntamos as duas tabelas de valores agrupados, e removemos a coluna extra de data:
+```{r}
+cases_and_deaths_col <- cbind(weekdays_and_cases, weekdays_and_deaths)
+
+cases_and_deaths_col[3] <- NULL
+
+cases_and_deaths_col
+```
+
+
+Agora, ordenamos os dias da semana (isso será importante para determinar a ordem das colunas em um gráfico de barras):
+```{r}
+ordem = c("domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado")
+cases_and_deaths_col$diaDaSemana_curto <- factor(cases_and_deaths_col$diaDaSemana_curto, 
+                                                 levels = ordem)
+```
+
+Agora, usamos o pacote plotly para criar um gráfico de barras com a média de novos casos e novos óbitos de covid-19 por semana.
+Primeiro, renomeamos os dados (só para termos nomes mais sucintos):
+```{r}
+x <- cases_and_deaths_col$diaDaSemana_curto
+y1 <- cases_and_deaths_col$casosNovos
+y2 <- cases_and_deaths_col$obitosNovos
+```
+
+Como casos e mortes estão em escalas de grandeza bem diferentes, precisaremos de um segundo eixo de y. Esse será o eixo das mortes:
+```{r}
+second_axis <- list(overlaying = "y",
+                    side = "right",
+                    title = "número de novos óbitos")
+```
+
+Agora podemos montar o gráfico:
+```{r, out.width="100%"}
+
+p <- plot_ly() %>% 
+  add_bars(cases_and_deaths_col, x = ~x, y = ~y1, name = 'novos casos (média aritmética)', 
+           marker = list(color = "#A4B494"), offsetgroup = 1) %>%
+  add_bars(data, x = ~x, y = ~y2, name = 'novos óbitos (média aritmética)', 
+           marker = list(color = "#000000" ), yaxis = "y2", offsetgroup = 2) %>%
+  layout(title = list(text ="Casos e óbitos por dia da semana", x = 0.14),
+        yaxis2 = second_axis,
+         xaxis = list(title = "Dia da semana", tickangle = -45),
+         yaxis = list(title = "número de novos casos"),
+         margin = list(b = 100),
+         barmode = 'group',
+         legend = list(x = 1.1, y = 1))
+
+#(agradeço ao Vlad de 
+#https://stackoverflow.com/questions/51740331/plotly-r-bar-chart-with-two-axes
+#por ter mostrado um exemplo de como botar dois eixos de y em um gráfico só)
+
+p
+
+library("knitr")
+#::include_graphics("cases_weekday_plotly.png")
+
+```
+
+Realmente, parece haver menos casos notificados aos domingos. Além disso, os valores da segunda-feira também tendem a ser menores que o geral. Os dados do ministério da saúde geralmente se referem às 24 horas anteriores; portanto, grande parte dos casos notificados aos domingos e segundas se referem a casos de sábados e domingos, respectivamente. De certa forma, é bem compreensível que o número de novos casos seja menor no fim de semana: centros de testagem tendem a abrir por menos horas ou até fechar completamente, e assim a capacidade de gerar novas confirmações de covid-19 fica limitada.
+
+Porém, há ainda um aspecto desses dados que não faz muito sentido. Há menos *mortes* notificadas nos domingos e segundas também. Uma capacidade de testagem limitada nos fins de semana pode explicar menos casos, mas não menos mortes---a não ser que haja uma parcela grande de testes de covid-19 sendo feitos postumamente, o que siginifcaria que nos fins de semana, quando há menos testes, há menos oportunidade de testar os falecidos. Porém, é improvável que essa diferença grande de notificações de óbitos seja simplesmente um resultado de menos testes póstumos sendo feitos. Mas qual seria a outra explicação?
+
+Acredito que essa diferença no número de novos casos e óbitos no final de semana também tenha a ver, por fim, com a maneira como a notificações oficiais de covid-19 são feitas no Brasil. É importante ter em mente que, diferentemente do que ocorre em outros países, no Brasil os casos são 'datados' pelo ministério da saúde no dia em que o ministério os recebe (isto é, se forem recebidos até às 16:00). Isso siginifica que, além da defasagem de 24 horas que já mencionamos, qualquer atraso por parte das secretarias de saúde ou do ministério resulta em simpleste menos casos notificados em um determinado dia. Como há menos pessoas trabalhando nos sábados e domingos, a capacidade de atualizar o número de casos e óbitos---tanto em hospitais, como nas secretarias estaduais, como no ministério---simplesmente fica limitada. Com isso, muitos casos acabam sendo notificados com algum atraso, o que causa um aumento artificial no número de casos notificados durante a semana. 
+
+É claro que todas essas afirmações estão sendo feitas com base nas média aritmética de óbitos e casos novos por dia da semana e, é claro, médias nem sempre são representações muito acuradas de um grupo. Isso ocorre porque elas são fortemente afetadas por outliers. Portanto, talvez seja mais apropriado olhar para a mediana de novos casos e a mediana de novos óbitos por dia da semana. Podemos ver a mediana e o desvio padrão de cada dia usando boxplots.
+
+```{r}
+
+covid2 <- covid
+
+ordem = c("domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado")
+covid2$diaDaSemana_curto <- factor(covid2$diaDaSemana_curto, levels = ordem)
+
+#Criando uma coluna com a mediana de casos novos por dia da semana 
+#(vamos usá-la para o preenchimento do boxplot)
+covid2 = covid2 %>%
+  group_by(diaDaSemana_curto) %>% 
+  mutate(mediana = median(casosNovos))
+
+#Boxplot simples
+box_casos <- covid2 %>%
+  ggplot(aes(x=diaDaSemana_curto, y=casosNovos)) +
+    geom_boxplot() + 
+  labs(title = "Boxplots de novos casos notificados por dia da semana",
+         x = "dia da semana",
+         y = "número de casos")
+
+box_casos
+
+#Boxplot preenchido com base no valor da mediana de cada dia:
+box_casos_filled <- covid2 %>%
+  ggplot(aes(x=diaDaSemana_curto, y=casosNovos, fill = mediana)) +
+    geom_boxplot() + 
+  labs(title = "Boxplots de novos casos notificados por dia da semana",
+         x = "dia da semana",
+         y = "número de casos")
+
+box_casos_filled
+
+```
+
+
+```{r}
+
+#Criando uma coluna com a mediana de óbitos novos por dia da semana 
+#(vamos usá-la para o preenchimento do boxplot)
+covid2 = covid2 %>%
+  group_by(diaDaSemana_curto) %>% 
+  mutate(mediana = median(obitosNovos))
+
+#boxplot simples
+box_obitos <- covid2 %>%
+  ggplot(aes(x=diaDaSemana_curto, y=obitosNovos)) +
+    geom_boxplot() + 
+  labs(title = "Boxplots de novos óbitos notificados por dia da semana","white", 
+         x = "dia da semana",
+         y = "número de óbitos")
+
+box_obitos
+
+#Boxplot preenchido com base no valor da mediana de cada dia:
+box_obitos_filled <- covid2 %>%
+  ggplot(aes(x=diaDaSemana_curto, y=obitosNovos, fill = mediana)) +
+    geom_boxplot() + 
+  labs(title = "Boxplots de novos óbitos notificados por dia da semana","white", 
+         x = "dia da semana",
+         y = "número de óbitos")
+
+box_obitos_filled
+
+```
+
+Vendo os boxplots, parece que as medianas de casos e de óbitos (especialmente a de óbitos) também são menores no domingo e na segunda. Porém, também vemos que vários dias das semanas têm outliers, e que a diferença entre as medianas dos dias não é tão acentuada quanto a diferença de médias que havíamos visto no gráfico de barras. Ainda é possível que domingo e segunda sejam significativamente diferentes dos outros dias, mas seria preciso fazer testes estatísticos de comparação para confirmar isso.
+
+De qualquer maneira, é importante ter essa possível diferença entre dias da semana em mente ao analisar dados e fazer projeções da covid-19 no Brasil. Por exemplo, ao calcular taxas de crescimento, devemos tentar usar períodos que incluam semanas inteiras (e não pedaços de uma semana), e assim tentar diluir o efeito das diferenças nas notificações ao longo da semana. 
