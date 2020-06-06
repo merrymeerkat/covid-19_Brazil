@@ -1,19 +1,3 @@
 # covid-19_Brazil
 
-Olhando para o gráfico de novos casos por dia que aparece no portal do ministério da saúde (https://covid.saude.gov.br/), tive a impressão de que os números de casos novos nos domingos tendia  a ser menor. Decidi investigar isso mais a fundo, e agrupar os números de novos casos e novos óbitos por dia da semana para conferir se haveria mesmo uma diferença.   
 
-![](images/cases_weekday_plotly)
-
-Gráfico 1: Gráfico de barras com a média de novos casos e novos óbitos de covid-19 por semana, feito com plotly.
-
-Olhando o gráfico, realmente parece haver menos casos notificados aos domingos. Além disso, os valores da segunda-feira também tendem a ser menores que o geral. Os dados do ministério da saúde geralmente se referem às 24 horas anteriores; portanto, grande parte dos casos notificados aos domingos e segundas se referem a casos de sábados e domingos, respectivamente. De certa forma, é bem compreensível que o número de novos casos seja menor no fim de semana: centros de testagem tendem a abrir por menos horas ou até fechar completamente, e assim a capacidade de gerar novas confirmações de covid-19 fica limitada.
-
-Porém, há ainda um aspecto desses dados que não faz muito sentido. Há menos *mortes* notificadas nos domingos e segundas também. Uma capacidade de testagem limitada nos fins de semana pode explicar menos casos, mas não menos mortes---a não ser que haja uma parcela grande de testes de covid-19 sendo feitos postumamente, o que siginifcaria que nos fins de semana, quando há menos testes, há menos oportunidade de testar os falecidos. Porém, é improvável que essa diferença grande de notificações de óbitos seja simplesmente um resultado de menos testes póstumos sendo feitos. Mas qual seria a outra explicação?
-
-Acredito que essa diferença no número de novos casos e óbitos no final de semana também tenha a ver, por fim, com a maneira como a notificações oficiais de covid-19 são feitas no Brasil. É importante ter em mente que, diferentemente do que ocorre em outros países, no Brasil os casos são 'datados' pelo ministério da saúde no dia em que o ministério os recebe (isto é, se forem recebidos até às 16:00). Isso siginifica que, além da defasagem de 24 horas que já mencionamos, qualquer atraso por parte das secretarias de saúde ou do ministério resulta em simpleste menos casos notificados em um determinado dia. Como há menos pessoas trabalhando nos sábados e domingos, a capacidade de atualizar o número de casos e óbitos---tanto em hospitais, como nas secretarias estaduais, como no ministério---simplesmente fica limitada. Com isso, muitos casos acabam sendo notificados com algum atraso, o que causa um aumento artificial no número de casos notificados durante a semana. 
-
-É claro que todas essas afirmações estão sendo feitas com base nas média aritmética de óbitos e casos novos por dia da semana e, é claro, médias nem sempre são representações muito acuradas de um grupos. Portanto, talvez seja mais apropriado olhar para a mediana de novos casos e a mediana de novos óbitos por dia da semana. 
-
-Vendo os boxplots, parece que as medianas de casos e de óbitos (especialmente a de óbitos) também são menores no domingo e na segunda. Porém, também vemos que vários dias das semanas têm outliers, e que a diferença entre as medianas dos dias não é tão acentuada quanto a diferença de médias que havíamos visto no gráfico de barras. Ainda é possível que domingo e segunda sejam significativamente diferentes dos outros dias, mas seria preciso fazer testes estatísticos de comparação para confirmar isso.
-
-De qualquer maneira, é importante ter essa possível diferença entre dias da semana em mente ao analisar dados e fazer projeções da covid-19 no Brasil. Por exemplo, ao calcular taxas de crescimento, devemos tentar usar períodos que incluam semanas inteiras (e não pedaços de uma semana), e assim tentar diluir o efeito das diferenças nas notificações ao longo da semana. 
