@@ -2,5 +2,9 @@ Olhando para o gráfico de novos casos por dia que aparece no portal do ministé
 
 ![](images/cases_weekday_plotly.png)
 
-*adicionar boxplot*
+![](images/boxplot_casos.png)
+
+![](images/boxplot_obitos.png)
+
+
 Veja o arquivo R-Markdown ou HTML para a discussão completa do assunto.
