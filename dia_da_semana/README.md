@@ -1,4 +1,4 @@
-*último update: 15 de junho*
+*último update: 15 de junho (colunas), 2 de junho (boxplot)*
 
 As seguintes visualizações, feitas com ggplot e plotly (em R) resumem a tendência de notificações de novos casos e óbitos de covid-19 por dia da semana no Brasil. O código detalhado e uma discussão mais completa do assunto podem ser encontrados nos arquivos R-Markdown e HTML nessa pasta.
 
